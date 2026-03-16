@@ -6,9 +6,12 @@ import SessionStatus from './SessionStatus';
 
 interface Props {
   voiceState: VoiceState;
+  isActive: boolean;
+  onStart: () => void;
+  onStop: () => void;
 }
 
-export default function LeftRail({ voiceState }: Props) {
+export default function LeftRail({ voiceState, isActive, onStart, onStop }: Props) {
   return (
     <aside className="left-rail">
       <div className="brand-block">
@@ -19,7 +22,12 @@ export default function LeftRail({ voiceState }: Props) {
       </div>
       
       <div className="voice-area">
-        <VoiceButton state={voiceState} />
+        <VoiceButton 
+          state={voiceState} 
+          isActive={isActive}
+          onStart={onStart}
+          onStop={onStop} 
+        />
         <span className="voice-status-label">{voiceState === 'idle' ? 'Ready' : voiceState}</span>
       </div>
 

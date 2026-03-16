@@ -4,9 +4,12 @@ import { VoiceState } from '../../types';
 
 interface Props {
   state: VoiceState;
+  isActive: boolean;
+  onStart: () => void;
+  onStop: () => void;
 }
 
-export default function VoiceButton({ state }: Props) {
+export default function VoiceButton({ state, isActive, onStart, onStop }: Props) {
   const isListening = state === 'listening' || state === 'speaking' || state === 'connecting' || state === 'processing';
   
   const getIcon = () => {
@@ -28,12 +31,21 @@ export default function VoiceButton({ state }: Props) {
     }
   };
 
+  const handleClick = () => {
+    if (isActive) {
+      onStop();
+    } else {
+      onStart();
+    }
+  };
+
   return (
     <div className={`voice-button-wrapper ${isListening ? 'listening' : ''}`}>
       <div className="voice-ring"></div>
       <button 
         className={`voice-button ${isListening ? 'listening' : ''}`}
         aria-label="Toggle Voice Control"
+        onClick={handleClick}
       >
         {getIcon()}
       </button>

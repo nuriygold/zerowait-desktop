@@ -8,14 +8,22 @@ import StageCanvas from './StageCanvas';
 
 interface Props {
   state: ZeroWaitDesktopState;
+  isActive: boolean;
+  onStart: () => void;
+  onStop: () => void;
 }
 
-export default function ZeroWaitDesktopShell({ state }: Props) {
+export default function ZeroWaitDesktopShell({ state, isActive, onStart, onStop }: Props) {
   const hasContextData = !!(state.appointmentContext || state.timingStatus || state.patientCoordination);
 
   return (
     <div className="desktop-shell-layout">
-      <LeftRail voiceState={state.voiceState} />
+      <LeftRail 
+        voiceState={state.voiceState} 
+        isActive={isActive}
+        onStart={onStart}
+        onStop={onStop}
+      />
       
       <main className="main-workspace">
         <ProgressBar currentStage={state.stage} />

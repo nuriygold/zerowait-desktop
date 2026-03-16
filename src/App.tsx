@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ZeroWaitDesktopShell from './components/desktop/ZeroWaitDesktopShell'
 import { ZeroWaitDesktopState } from './types'
+import { useGeminiLive } from './lib/useGeminiLive'
+
 
 const INITIAL_STATE: ZeroWaitDesktopState = {
   stage: "connect",
@@ -11,6 +13,7 @@ const INITIAL_STATE: ZeroWaitDesktopState = {
 
 function App() {
   const [state, setState] = useState<ZeroWaitDesktopState>(INITIAL_STATE);
+  const { isActive, startSession, stopSession } = useGeminiLive(setState);
 
   // For demonstration, expose setState to window
   if (typeof window !== "undefined") {
@@ -20,7 +23,12 @@ function App() {
   }
 
   return (
-    <ZeroWaitDesktopShell state={state} />
+    <ZeroWaitDesktopShell 
+      state={state} 
+      isActive={isActive}
+      onStart={startSession}
+      onStop={stopSession}
+    />
   )
 }
 
