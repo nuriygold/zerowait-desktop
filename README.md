@@ -1,73 +1,73 @@
-# React + TypeScript + Vite
+# ZeroWait - Google AI Hackathon Submission 🗣️
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Category:** Live Agents (Real-time Interaction)
 
-Currently, two official plugins are available:
+## Project Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**ZeroWait** is a voice-first appointment timing assistant designed for doctor's offices. Instead of patients continually interrupting the front desk to ask "Is the doctor running on time?", this application provides a calm, interactive conversational interface powered by **Gemini 2.0 Live**.
 
-## React Compiler
+The agent does more than just chat: it utilizes **Function Calling (Tools)** embedded directly into the Live WebSocket stream to manipulate the React User Interface dynamically in real time. When the Gemini model decides to fetch the doctor's schedule or confirm a patient's delay, the UI instantly reflects those actions without page reloads.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Architecture
 
-## Expanding the ESLint configuration
+Our application is built on a React/Vite frontend that communicates directly with the Gemini Multimodal Live API via WebSockets. The entire application is hosted automatically via **Google Cloud Firebase Hosting**.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+```mermaid
+sequenceDiagram
+    participant User
+    participant React UI
+    participant Gemini Live (WebSocket)
+     participant Google Cloud (Firebase)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+    Note over React UI, Google Cloud (Firebase): App served via Firebase Hosting
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+    User->>React UI: Clicks Microphone
+    React UI->>Gemini Live (WebSocket): Initiates Realtime Session (wss)
+    User->>React UI: Speaks "Is Dr. Sanchez on time?"
+    React UI->>Gemini Live (WebSocket): Streams Audio PCM via base64
+    Gemini Live (WebSocket)-->>React UI: Returns ToolCall: checkStatus()
+    React UI->>React UI: Triggers UI Transition (Updates Progress Bar)
+    React UI->>Gemini Live (WebSocket): Tool Response (Delay: 15m)
+    Gemini Live (WebSocket)-->>React UI: Synthesized Audio ("He is 15 minutes behind")
+    React UI-->>User: Plays Audio
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Core Technologies
+- **@google/genai**: Native SDK used for bridging the multimodal live session.
+- **Bi-directional WebSockets**: Used for zero-latency audio streaming (PCM 16000Hz) and real-time Tool Calling.
+- **Vite & React**: The client-side framework managing the complex state machine mappings.
+- **Google Cloud Firebase**: Provides edge-to-edge static hosting for the compiled frontend.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Local Spin-up Instructions
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+To verify the code and run this exact application locally:
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/nuriygold/zerowait-desktop.git
+   cd zerowait-desktop
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure the Gemini API Key:**
+   Create a `.env` file in the root of the project and insert your Gemini API key. Ensure it has access to the experimental Gemini 2.0 models.
+   ```bash
+   VITE_GEMINI_API_KEY=your_key_here
+   ```
+
+4. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+
+5. **Interact:**
+   Navigate into the provided localhost port (e.g., `http://localhost:5173`). Click the main microphone button to initiate the WebSocket connection and speak your prompt.
+
+## Cloud Deployment Proof
+This repository is configured to deploy directly to Firebase Hosting via `firebase.json` and `.firebaserc`.
+
+**Live Demo URL:** [https://zerowait-desktop.web.app/](https://zerowait-desktop.web.app/)
