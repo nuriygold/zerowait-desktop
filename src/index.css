@@ -94,6 +94,7 @@ button:focus-visible {
     align-items: center;
     justify-content: space-between;
     padding: 16px;
+    padding-top: calc(16px + env(safe-area-inset-top));
     border-right: none;
     border-bottom: 1px solid var(--color-border);
   }
@@ -170,16 +171,16 @@ button:focus-visible {
 
 @media (max-width: 768px) {
   .voice-button-wrapper {
-    width: 60px;
-    height: 60px;
+    width: 64px;
+    height: 64px;
   }
   .voice-button {
-    width: 50px;
-    height: 50px;
+    width: 64px;
+    height: 64px;
   }
   .voice-button svg {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
   }
 }
 
@@ -380,6 +381,10 @@ button:focus-visible {
   }
   .assist-panel h2 {
     font-size: 1.25rem;
+    margin-bottom: 16px;
+  }
+  .assist-panel p {
+    font-size: 1rem;
   }
 }
 .assist-panel p {
@@ -417,6 +422,15 @@ button:focus-visible {
   flex-direction: column;
   gap: 8px;
   min-height: 90px;
+}
+@media (max-width: 768px) {
+  .live-feedback-strip {
+    padding: 16px;
+    min-height: 70px;
+  }
+  .feedback-text {
+    font-size: 1rem;
+  }
 }
 .feedback-label {
   font-size: 0.75rem;
