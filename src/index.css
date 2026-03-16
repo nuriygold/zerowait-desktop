@@ -639,6 +639,225 @@ button:focus-visible {
   margin: 0;
 }
 
+/* Confirm Identity / Appointment panel (two-column design) */
+.assist-panel.confirm-identity-panel {
+  max-width: 900px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.confirm-identity-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  min-height: 360px;
+}
+
+.confirm-identity-left {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  background: var(--bg-desktop);
+}
+
+.confirm-identity-card {
+  background: linear-gradient(180deg, #5B4B8A 0%, #7B6BA8 100%);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  color: white;
+}
+
+.confirm-identity-icon {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+  color: white;
+}
+
+.confirm-identity-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: white;
+}
+
+.confirm-identity-desc {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.confirm-hipaa-card {
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  border: 1px solid var(--color-border);
+}
+
+.confirm-hipaa-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-core);
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.confirm-hipaa-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.confirm-hipaa-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.confirm-hipaa-list li:last-child {
+  margin-bottom: 0;
+}
+
+.confirm-hipaa-check {
+  color: #5B4B8A;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.confirm-identity-right {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+}
+
+.confirm-form-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-core);
+  margin: 0 0 8px 0;
+}
+
+.confirm-form-subtitle {
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  margin: 0 0 24px 0;
+}
+
+.confirm-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.confirm-form-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-core);
+}
+
+.confirm-form-label svg {
+  color: var(--text-muted);
+}
+
+.confirm-form-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  color: var(--text-core);
+  background: var(--bg-surface);
+}
+
+.confirm-form-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+.confirm-form-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.confirm-form-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #E8F4FD;
+  border: 1px solid #B8DAF5;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  color: #1a5a8a;
+  margin-bottom: 24px;
+}
+
+.confirm-form-alert svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.confirm-form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: auto;
+}
+
+.confirm-btn {
+  padding: 12px 24px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.confirm-btn--secondary {
+  background: var(--bg-surface);
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+}
+
+.confirm-btn--secondary:hover {
+  background: var(--color-primary-light);
+}
+
+.confirm-btn--primary {
+  background: #3B82F6;
+  border: none;
+  color: white;
+}
+
+.confirm-btn--primary:hover {
+  background: #2563EB;
+}
+
+@media (max-width: 768px) {
+  .confirm-identity-layout {
+    grid-template-columns: 1fr;
+  }
+  .confirm-identity-left {
+    order: 1;
+  }
+  .confirm-identity-right {
+    order: 0;
+    padding: 24px;
+  }
+}
+
 @media (max-width: 768px) {
   .assist-panel {
     padding: 24px;

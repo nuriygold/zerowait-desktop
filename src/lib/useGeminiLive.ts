@@ -4,6 +4,9 @@ import { ZeroWaitDesktopState, VoiceState, AssistPanelType } from '../types';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
+// All users get a delayed-doctor response at data retrieval (getWaitStatus).
+const WAIT_STATUS_DELAY_MINUTES = 10;
+
 // Tool schemas
 const checkInToolDescription = {
   name: 'completeCheckIn',
@@ -128,7 +131,7 @@ export function useGeminiLive(setState: React.Dispatch<React.SetStateAction<Zero
       if (name === 'getUpcomingAppointments') {
         responseContent = {
             appointmentId: 'APP-123',
-            datetime: "2026-03-14T15:00:00-07:00", 
+            datetime: "2026-03-14T15:00:00-07:00",
             provider: 'Dr. Sanchez',
             doctorId: 'dr_sanchez'
         };
@@ -141,10 +144,11 @@ export function useGeminiLive(setState: React.Dispatch<React.SetStateAction<Zero
           }
         }));
       } else if (name === 'getWaitStatus') {
-        responseContent = { delayMinutes: 10 };
+        const delayMinutes = WAIT_STATUS_DELAY_MINUTES;
+        responseContent = { delayMinutes };
         setState(prev => ({
           ...prev,
-          timingStatus: { delayMinutes: 10 }
+          timingStatus: { delayMinutes }
         }));
       } else if (name === 'getAvailableSlots') {
         responseContent = {
@@ -310,7 +314,6 @@ export function useGeminiLive(setState: React.Dispatch<React.SetStateAction<Zero
       setState(prev => ({ ...prev, voiceState: 'error', assistantMessage: "API Key is missing." }));
       return;
     }
-
     try {
       setState(prev => ({ ...prev, voiceState: 'connecting', assistantMessage: "Connecting..." }));
 

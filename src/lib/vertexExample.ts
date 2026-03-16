@@ -12,10 +12,9 @@ import { GoogleGenAI } from '@google/genai';
 export async function initializeVertexAI() {
   // Uses Google Cloud Project and Location for Vertex AI API Calls
   const ai = new GoogleGenAI({
-    vertexai: {
-      project: import.meta.env.VITE_GOOGLE_CLOUD_PROJECT || 'zerowait-prod-server',
-      location: import.meta.env.VITE_GOOGLE_CLOUD_LOCATION || 'us-central1',
-    }
+    vertexai: true,
+    project: import.meta.env.VITE_GOOGLE_CLOUD_PROJECT || 'zerowait-prod-server',
+    location: import.meta.env.VITE_GOOGLE_CLOUD_LOCATION || 'us-central1',
   });
 
   try {
