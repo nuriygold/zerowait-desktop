@@ -148,10 +148,10 @@ export function useGeminiLive(setState: React.Dispatch<React.SetStateAction<Zero
       functionResponses.push({ id, name, response: responseContent });
     }
 
-    if (sessionRef.current) {
-      sessionRef.current.send({
+    if (sessionRef.current?.conn) {
+      sessionRef.current.conn.send(JSON.stringify({
           toolResponse: { functionResponses }
-      });
+      }));
     }
   };
 
@@ -438,9 +438,11 @@ No raw audio or captions are stored. All traffic must be TLS.`
         for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
         const base64Audio = btoa(binary);
 
-        sessionRef.current.send({
-            realtimeInput: { mediaChunks: [{ mimeType: "audio/pcm;rate=16000", data: base64Audio }] }
-        });
+        if (sessionRef.current?.conn) {
+            sessionRef.current.conn.send(JSON.stringify({
+                realtimeInput: { mediaChunks: [{ mimeType: "audio/pcm;rate=16000", data: base64Audio }] }
+            }));
+        }
       };
 
       // Listen to messages
