@@ -117,10 +117,14 @@ export function useGeminiLive(setState: React.Dispatch<React.SetStateAction<Zero
           }
         }));
       } else if (name === 'getWaitStatus') {
-        responseContent = { delayMinutes: 10 };
+        // Introduce a mixed-bag delay for demo purposes (0, 15, 30, or 45 mins)
+        const mockDelays = [0, 15, 30, 45];
+        const delayMinutes = mockDelays[Math.floor(Math.random() * mockDelays.length)];
+        
+        responseContent = { delayMinutes };
         setState(prev => ({
           ...prev,
-          timingStatus: { delayMinutes: 10 }
+          timingStatus: { delayMinutes }
         }));
       } else if (name === 'getAvailableSlots') {
         responseContent = {
@@ -351,7 +355,7 @@ PRIMARY USER JOURNEY
 ### LOGIC RULES
 * **Wait status**
   * Call \`getWaitStatus\`.
-  * If \`delayMinutes\` > 0 → announce delay and new expected start.
+  * If \`delayMinutes\` > 0 → announce delay, explicitly calculate, and verbally inform them of their new expected time (e.g., if their appointment is 3:00 PM and the delay is 45 minutes, tell them they will be seen around 3:45 PM). Gracefully answer questions like "Is my doctor running late?" by stating the delay and the newly calculated time.
   * If 0 → announce *Zero wait!*
 * **Late / reschedule**
   * On any late intent (“running late”, “need to move”) call \`getAvailableSlots\`.
