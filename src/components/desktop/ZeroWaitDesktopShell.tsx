@@ -9,24 +9,46 @@ import StageCanvas from './StageCanvas';
 interface Props {
   state: ZeroWaitDesktopState;
   isActive: boolean;
+  hasStartedOnce: boolean;
   onStart: () => void;
   onStop: () => void;
+  micMuted: boolean;
+  speakerMuted: boolean;
+  onToggleMicMute: () => void;
+  onToggleSpeakerMute: () => void;
 }
 
-export default function ZeroWaitDesktopShell({ state, isActive, onStart, onStop }: Props) {
+export default function ZeroWaitDesktopShell({ state, isActive, hasStartedOnce, onStart, onStop, micMuted, speakerMuted, onToggleMicMute, onToggleSpeakerMute }: Props) {
   const hasContextData = !!(state.appointmentContext || state.timingStatus || state.patientCoordination);
 
   return (
     <div className="desktop-shell-layout">
-      <LeftRail 
-        voiceState={state.voiceState} 
+      <LeftRail
+        voiceState={state.voiceState}
         isActive={isActive}
+        hasStartedOnce={hasStartedOnce}
         onStart={onStart}
         onStop={onStop}
+        micMuted={micMuted}
+        speakerMuted={speakerMuted}
+        onToggleMicMute={onToggleMicMute}
+        onToggleSpeakerMute={onToggleSpeakerMute}
       />
-      
+
       <main className="main-workspace">
-        <ProgressBar currentStage={state.stage} />
+        <div className="main-header">
+          <button
+            type="button"
+            className="main-header-back"
+            aria-label="Back"
+            // Future: hook into navigation when multi-screen
+          >
+            ←
+          </button>
+          <div className="main-header-right" />
+        </div>
+
+        {hasStartedOnce && <ProgressBar currentStage={state.stage} />}
         
         <StageCanvas 
           assistPanel={state.assistPanel} 

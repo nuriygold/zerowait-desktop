@@ -13,7 +13,21 @@ const INITIAL_STATE: ZeroWaitDesktopState = {
 
 function App() {
   const [state, setState] = useState<ZeroWaitDesktopState>(INITIAL_STATE);
-  const { isActive, startSession, stopSession } = useGeminiLive(setState);
+  const [hasStartedOnce, setHasStartedOnce] = useState(false);
+  const {
+    isActive,
+    startSession,
+    stopSession,
+    micMuted,
+    speakerMuted,
+    toggleMicMute,
+    toggleSpeakerMute,
+  } = useGeminiLive(setState);
+
+  const handleStart = () => {
+    setHasStartedOnce(true);
+    startSession();
+  };
 
   // For demonstration, expose setState to window
   if (typeof window !== "undefined") {
@@ -23,13 +37,18 @@ function App() {
   }
 
   return (
-    <ZeroWaitDesktopShell 
-      state={state} 
+    <ZeroWaitDesktopShell
+      state={state}
       isActive={isActive}
-      onStart={startSession}
+      hasStartedOnce={hasStartedOnce}
+      onStart={handleStart}
       onStop={stopSession}
+      micMuted={micMuted}
+      speakerMuted={speakerMuted}
+      onToggleMicMute={toggleMicMute}
+      onToggleSpeakerMute={toggleSpeakerMute}
     />
-  )
+  );
 }
 
 export default App
