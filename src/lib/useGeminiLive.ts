@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI, Type, Modality } from '@google/genai';
 import { ZeroWaitDesktopState, VoiceState, AssistPanelType } from '../types';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
@@ -70,12 +70,36 @@ const rescheduleAppointmentToolDescription = {
 
 export function useGeminiLive(setState: React.Dispatch<React.SetStateAction<ZeroWaitDesktopState>>) {
   const [isActive, setIsActive] = useState(false);
+  const [micMuted, setMicMuted] = useState(false);
+  const [speakerMuted, setSpeakerMuted] = useState(false);
   const sessionRef = useRef<any>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const textBufferRef = useRef('');
   const nextPlayTimeRef = useRef(0);
   const gainNodeRef = useRef<GainNode | null>(null);
+  const micMutedRef = useRef(false);
+  const speakerMutedRef = useRef(false);
+
+  const toggleMicMute = useCallback(() => {
+    setMicMuted(prev => {
+      const next = !prev;
+      micMutedRef.current = next;
+      return next;
+    });
+  }, []);
+
+  const toggleSpeakerMute = useCallback(() => {
+    setSpeakerMuted(prev => {
+      const next = !prev;
+      speakerMutedRef.current = next;
+      // If we already have a gain node, update it immediately.
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = next ? 0 : 1;
+      }
+      return next;
+    });
+  }, []);
 
   const formatTime12Hour = (isoString?: string) => {
     if (!isoString) return '';
@@ -261,6 +285,8 @@ export function useGeminiLive(setState: React.Dispatch<React.SetStateAction<Zero
         gainNodeRef.current = ctx.createGain();
         gainNodeRef.current.connect(ctx.destination);
     }
+    // Ensure gain reflects current speaker mute state.
+    gainNodeRef.current.gain.value = speakerMutedRef.current ? 0 : 1;
     source.connect(gainNodeRef.current);
 
     const currentTime = ctx.currentTime;
@@ -309,11 +335,17 @@ export function useGeminiLive(setState: React.Dispatch<React.SetStateAction<Zero
         await audioContextRef.current.resume();
       }
 
-      const ai = new GoogleGenAI({ apiKey: API_KEY, httpOptions: { baseUrl: "https://generativelanguage.googleapis.com" } });
+      // Live API native audio models require v1alpha (not supported in v1beta)
+      const ai = new GoogleGenAI({
+        apiKey: API_KEY,
+        httpOptions: {
+          baseUrl: "https://generativelanguage.googleapis.com",
+          apiVersion: "v1alpha",
+        },
+      });
       
-      const session = await ai.live.connect({
-        model: 'models/gemini-2.0-flash-exp',
-        config: {
+      const config = {
+            responseModalities: [Modality.AUDIO],
             systemInstruction: {
                 parts: [{
                     text: `You are **“zerowait doctor assistant,”** the voice-only front desk for a medical clinic.
@@ -376,27 +408,29 @@ No raw audio or captions are stored. All traffic must be TLS.`
             speechConfig: {
                 voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } }
             },
-            responseModalities: ["AUDIO"] as any
-        },
-        callbacks: {
-           onmessage: async (data: any) => {
-             // Messages arrive as strings or blobs already buffered by the SDK
-             try {
-                if (data instanceof Blob) data = await data.text();
-                else if (data instanceof ArrayBuffer) data = new TextDecoder().decode(data);
-                
-                const message = JSON.parse(data);
+        };
 
+      const callbacks = {
+           onopen: () => {
+             console.debug('[Live] WebSocket opened');
+           },
+           onerror: (e: any) => {
+             console.error('[Live] WebSocket error:', e?.message ?? e);
+             setState(prev => ({ ...prev, voiceState: 'error', assistantMessage: (e?.message as string) ?? 'Connection error.' }));
+           },
+           // Live callbacks receive an already-parsed message object, not raw JSON.
+           onmessage: async (message: any) => {
+             try {
                 if (message.serverContent?.modelTurn) {
                       for (const part of message.serverContent.modelTurn.parts) {
                           if (part.text) processIncomingText(part.text);
-                          if (part.inlineData?.mimeType.startsWith('audio/pcm')) {
+                          if (part.inlineData?.mimeType?.startsWith('audio/pcm')) {
                               playAudioChunk(part.inlineData.data);
                           }
                       }
                 }
                 if (message.serverContent?.turnComplete) {
-                      textBufferRef.current = ""; 
+                      textBufferRef.current = "";
                 }
                 if (message.toolCall) {
                       await handleToolCall(message.toolCall);
@@ -405,11 +439,19 @@ No raw audio or captions are stored. All traffic must be TLS.`
                   console.error("Live stream parsing error:", err);
              }
            },
-           onclose: () => {
-             setState(prev => ({ ...prev, voiceState: 'error', assistantMessage: "Connection lost." }));
+           onclose: (e: CloseEvent) => {
+             const reason = e?.reason || `code ${e?.code ?? 'unknown'}`;
+             console.error('[Live] WebSocket closed:', e?.code, e?.reason, e);
+             setState(prev => ({ ...prev, voiceState: 'error', assistantMessage: `Connection lost. ${reason}` }));
              stopSession();
            }
-        }
+        };
+
+      // Native audio model for Live API (use with v1alpha)
+      const session = await ai.live.connect({
+        model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+        config,
+        callbacks,
       });
 
       sessionRef.current = session;
@@ -423,6 +465,7 @@ No raw audio or captions are stored. All traffic must be TLS.`
 
       scriptNode.onaudioprocess = (e) => {
         if (!sessionRef.current) return;
+        if (micMutedRef.current) return;
         const inputData = e.inputBuffer.getChannelData(0);
         const pcmData = new Int16Array(inputData.length);
         for (let i = 0; i < inputData.length; i++) {
@@ -438,21 +481,34 @@ No raw audio or captions are stored. All traffic must be TLS.`
         for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
         const base64Audio = btoa(binary);
 
-        if (sessionRef.current?.conn) {
-            sessionRef.current.conn.send(JSON.stringify({
-                realtimeInput: { mediaChunks: [{ mimeType: "audio/pcm;rate=16000", data: base64Audio }] }
-            }));
+        const s = sessionRef.current;
+        if (s?.sendRealtimeInput) {
+          try {
+            s.sendRealtimeInput({
+              audio: { data: base64Audio, mimeType: 'audio/pcm;rate=16000' }
+            });
+          } catch (err) {
+            console.error('[Live] sendRealtimeInput error:', err);
+          }
+        } else if (s?.conn) {
+          s.conn.send(JSON.stringify({
+            realtimeInput: { mediaChunks: [{ mimeType: "audio/pcm;rate=16000", data: base64Audio }] }
+          }));
         }
       };
 
-      // Listen to messages
-      const ws = session.conn;
-
       setIsActive(true);
       setState(prev => ({ ...prev, voiceState: 'idle' }));
-      
-      // Start flow
-      ws.send(JSON.stringify({ clientContent: { turns: [{ role: "user", parts: [{ text: "System Context: User just opened desktop page. Start with {\"ui_state\":\"GREETING\"} exactly as instructed in UI Contract." }] }] } }));
+
+      // Trigger initial greeting
+      const initialText = "System Context: User just opened desktop page. Start with {\"ui_state\":\"GREETING\"} exactly as instructed in UI Contract.";
+      if (typeof session.sendRealtimeInput === 'function') {
+        session.sendRealtimeInput({ text: initialText });
+      } else if (session.conn) {
+        session.conn.send(JSON.stringify({
+          clientContent: { turns: [{ role: "user", parts: [{ text: initialText }] }] }
+        }));
+      }
 
     } catch (e) {
       console.error(e);
@@ -469,12 +525,16 @@ No raw audio or captions are stored. All traffic must be TLS.`
         audioStreamRef.current.getTracks().forEach(t => t.stop());
         audioStreamRef.current = null;
     }
-    setState(prev => ({ ...prev, voiceState: 'idle', assistantMessage: "Session ended." }));
+    setState(prev => (prev.voiceState === 'error' ? prev : { ...prev, voiceState: 'idle', assistantMessage: "Session ended." }));
   }, [setState]);
 
   return {
     isActive,
     startSession,
-    stopSession
+    stopSession,
+    micMuted,
+    speakerMuted,
+    toggleMicMute,
+    toggleSpeakerMute
   };
 }

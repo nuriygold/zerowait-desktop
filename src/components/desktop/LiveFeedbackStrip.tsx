@@ -9,6 +9,8 @@ interface Props {
 export default function LiveFeedbackStrip({ message, voiceState }: Props) {
   const getStatusText = () => {
     switch (voiceState) {
+      case 'connecting': return 'Connecting...';
+      case 'error': return 'Error';
       case 'listening': return 'Listening...';
       case 'processing': return 'Checking...';
       case 'speaking': return 'You said...';
@@ -18,10 +20,12 @@ export default function LiveFeedbackStrip({ message, voiceState }: Props) {
     }
   };
 
+  const displayMessage = message || (voiceState === 'error' ? 'Something went wrong.' : "I can help you check Dr. Sanchez's schedule.");
+
   return (
-    <div className="live-feedback-strip" aria-live="polite">
+    <div className={`live-feedback-strip ${voiceState === 'error' ? 'live-feedback-strip--error' : ''}`} aria-live="polite">
       <div className="feedback-label">{getStatusText()}</div>
-      <div className="feedback-text">{message || "I can help you check Dr. Sanchez's schedule."}</div>
+      <div className="feedback-text">{displayMessage}</div>
     </div>
   );
 }
